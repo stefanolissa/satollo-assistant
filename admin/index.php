@@ -13,6 +13,7 @@ $subpage = $_GET['subpage'] ?? '';
 
 
 $categories = wp_get_ability_categories();
+$abilities = wp_get_abilities();
 ?>
 <style>
 
@@ -47,9 +48,20 @@ $categories = wp_get_ability_categories();
     <div class="categories">
         <?php foreach ($categories as $category) { ?>
 
+            <?php
+            $count = 0;
+            foreach ($abilities as $ability) {
+                if ($ability->get_category() === $category->get_slug()) {
+                    $count++;
+                }
+            }
+            ?>
+
             <a href="?page=assistant-chat&category=<?php echo rawurlencode($category->get_slug()); ?>" class="category">
                 <h3><?php echo $category->get_label(); ?></h3>
-                <?php echo $category->get_description(); ?>
+                <small><?= $count ?> abilities</small>
+                <p><?php echo $category->get_description(); ?></p>
+
             </a>
 
 

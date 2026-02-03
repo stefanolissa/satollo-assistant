@@ -11,6 +11,7 @@ use NeuronAI\Chat\Messages\UserMessage;
 use NeuronAI\Tools\PropertyType;
 use NeuronAI\Tools\Tool;
 use NeuronAI\Tools\ToolProperty;
+use NeuronAI\Tools\ArrayProperty;
 use NeuronAI\Chat\History\ChatHistoryInterface;
 use NeuronAI\Chat\History\FileChatHistory;
 
@@ -97,15 +98,34 @@ class AssistantAgent extends Agent {
                     $ability->get_description() . ' ' . $ability->get_meta_item('instructions', ''));
             $properties = $ability->get_input_schema()['properties'] ?? [];
             $required = $ability->get_input_schema()['required'] ?? [];
+
             foreach ($properties as $name => $data) {
-                $enum = $data['items']['enum'] ?? $data['enum'] ?? []; // Ok, I know...
-                $tool->addProperty(new ToolProperty(
-                                $name,
-                                PropertyType::fromSchema($data['type']),
-                                $data['description'],
-                                in_array($name, $required),
-                                $enum
-                ));
+                if ($data['type'] === 'array') {
+                    $items = ToolProperty::make(
+                            'items',
+                            PropertyType::fromSchema($data['items']['type']),
+                            $data['items']['description'] ?? '',
+                            false,
+                            $data['items']['enum'] ?? []
+                    );
+                    $tool->addProperty(ArrayProperty::make(
+                                    $name,
+                                    $data['description'],
+                                    in_array($name, $required),
+                                    $items,
+                                    $data['minItems'] ?? 0,
+                                    $data['maxItems'] ?? 9999
+                    ));
+                } else {
+                    $enum = $data['enum'] ?? []; // Ok, I know...
+                    $tool->addProperty(new ToolProperty(
+                                    $name,
+                                    PropertyType::fromSchema($data['type']),
+                                    $data['description'],
+                                    in_array($name, $required),
+                                    $enum
+                    ));
+                }
             }
 
 

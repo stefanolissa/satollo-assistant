@@ -35,4 +35,3 @@ To show a list of the available abilities, dump the input and output schema, log
 I adapted the plugin [Monitor](https://github.com/stefanolissa/monitor).
 
 
-

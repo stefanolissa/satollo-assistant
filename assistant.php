@@ -3,7 +3,7 @@
 /**
  * Plugin Name: Assistant
  * Description: Assistant based on AI to interact with your WP abilities
- * Version: 0.0.4
+ * Version: 0.0.5
  * Author: satollo
  * Author URI: https://www.satollo.net
  * License: GPL-2.0+
@@ -16,7 +16,7 @@
  */
 defined('ABSPATH') || exit;
 
-define('ASSISTANT_VERSION', '0.0.4');
+define('ASSISTANT_VERSION', '0.0.5');
 
 //register_activation_hook(__FILE__, function () {
 //    require_once __DIR__ . '/admin/activate.php';
@@ -62,4 +62,68 @@ add_filter('update_plugins_satollo_assistant', function ($update, $plugin_data, 
         return false;
     }
 }, 0, 4);
+
+
+add_filter('plugins_api', 'assistant_plugin_api_hook', 20, 3);
+
+function assistant_plugin_api_hook($res, $action, $args) {
+    if ($action !== 'plugin_information' || $args->slug !== 'assistant') {
+        return $res;
+    }
+
+    $response = wp_remote_get('https://www.satollo.net/repo/assistant/CHANGELOG.md');
+    $changelog = '';
+    if (wp_remote_retrieve_response_code($response) == '200') {
+        $changelog = wp_remote_retrieve_body($response);
+        $changelog = preg_replace('/^### (.*$)/m', '<h4>$1</h4>', $changelog);
+        $changelog = preg_replace('/^## (.*$)/m', '<h3>$1</h3>', $changelog);
+        $changelog = preg_replace('/^# (.*$)/m', '', $changelog);
+        $changelog = preg_replace('/^- (.*$)/m', '- $1<br>', $changelog);
+        $changelog = preg_replace('/\[([^\]]+)\]\(([^)]+)\)/', '<a href="$2" target="_blank">$1</a>', $changelog);
+        $changelog = wpautop($changelog, false);
+        $changelog = wp_kses_post($changelog);
+    }
+
+    $response = wp_remote_get('https://www.satollo.net/repo/assistant/README.md');
+    $readme = '';
+    if (wp_remote_retrieve_response_code($response) == '200') {
+        $readme = wp_remote_retrieve_body($response);
+        $readme = preg_replace('/^### (.*$)/m', '<h4>$1</h4>', $readme);
+        $readme = preg_replace('/^## (.*$)/m', '<h3>$1</h3>', $readme);
+        $readme = preg_replace('/^- (.*$)/m', '- $1<br>', $readme);
+        //$readme = preg_replace('/^# (.*$)/m', '<h2>$1</h2>', $readme);
+        $readme = preg_replace('/^# (.*$)/m', '', $readme);
+        $readme = preg_replace('/\[([^\]]+)\]\(([^)]+)\)/', '<a href="$2" target="_blank">$1</a>', $readme);
+        $readme = wpautop($readme, false);
+        $readme = wp_kses_post($readme);
+    }
+
+    $res = new stdClass();
+    $res->name = 'Assistant';
+    $res->slug = 'assistant';
+    $res->version = ASSISTANT_VERSION;
+    $res->author = '<a href="https://www.satollo.net">Stefano Lissa</a>';
+    $res->homepage = 'https://www.satollo.net/plugins/assistant';
+    $res->download_link = 'https://www.satollo.net/repo/assistant/assistant.zip';
+
+    // This creates the tabs in the popup (Description, Installation, Changelog)
+    $res->sections = array(
+        'description' => $readme,
+        //'installation' => 'Upload the zip and activate it. Simple!',
+        'changelog' => $changelog,
+            //'custom_tab'   => 'You can even add extra tabs here.'
+    );
+
+    $res->banners = [
+        'low' => 'https://www.satollo.net/repo/assistant/banner.png',
+        'high' => 'https://www.satollo.net/repo/assistant/banner.png'
+    ];
+
+    $res->icons = [
+        '1x' => 'https://www.satollo.net/repo/assistant/icon.png',
+        '2x' => 'https://www.satollo.net/repo/assistant/icon.png'
+    ];
+
+    return $res;
+}
 
