@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.6
+- New package name
+
 ## 0.0.5
 - Fixed integration with tools with array properties
 

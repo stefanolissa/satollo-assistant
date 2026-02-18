@@ -16,7 +16,7 @@
  */
 defined('ABSPATH') || exit;
 
-define('ASSISTANT_VERSION', '0.0.5');
+define('ASSISTANT_VERSION', '0.0.6');
 
 //register_activation_hook(__FILE__, function () {
 //    require_once __DIR__ . '/admin/activate.php';
