@@ -13,8 +13,8 @@ $subpage = $_GET['subpage'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     check_admin_referer('bulk-abilities');
-    $settings = $_POST['data'];
-    update_option('assistant', $settings ?? []);
+    $settings = wp_unslash($_POST['data']);
+    update_option('satollo_assistant_settings', $settings ?? []);
 
     // When the provider or the model is changed, the chat history must be deleted
     // (I should create a chat history for each provider+model but I'm lazy and probably
@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     AssistantAgent::make()->resolveChatHistory()->flushAll();
 }
 
-$settings = get_option('assistant', []);
+$settings = get_option('satollo_assistant_settings', []);
 $enabled_abilities = $settings['abilities'] ?? [];
 $provider = $settings['provider'] ?? 'mistral';
 
@@ -238,5 +238,5 @@ $table->prepare_items();
     <p>
         That helps me when supporting you...
     </p>
-    <pre><?php echo esc_html(print_r(get_option('assistant'), true)); ?></pre>
+    <pre><?php echo esc_html(print_r(get_option('satollo_assistant_settings'), true)); ?></pre>
 </div>

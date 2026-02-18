@@ -24,7 +24,7 @@ class AssistantAgent extends Agent {
     }
 
     protected function provider(): AIProviderInterface {
-        $settings = get_option('assistant', []);
+        $settings = get_option('satollo_assistant', []);
         switch ($settings['provider']) {
             case 'mistral':
                 return new NeuronAI\Providers\Mistral\Mistral(
@@ -191,7 +191,7 @@ class AssistantLogger extends AbstractLogger {
                 '[' .
                 strtoupper($level) .
                 '] ' .
-                $message . ' ' . 
+                $message . ' ' .
                 wp_json_encode($context, JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR)
         );
     }

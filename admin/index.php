@@ -57,10 +57,10 @@ $abilities = wp_get_abilities();
             }
             ?>
 
-            <a href="?page=assistant-chat&category=<?php echo rawurlencode($category->get_slug()); ?>" class="category">
-                <h3><?php echo $category->get_label(); ?></h3>
+            <a href="?page=satollo-assistant-chat&category=<?= rawurlencode($category->get_slug()); ?>" class="category">
+                <h3><?= esc_html($category->get_label()) ?></h3>
                 <small><?= $count ?> abilities</small>
-                <p><?php echo $category->get_description(); ?></p>
+                <p><?= esc_html($category->get_description()) ?></p>
 
             </a>
 

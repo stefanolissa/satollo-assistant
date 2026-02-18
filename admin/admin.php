@@ -8,7 +8,7 @@ wp_mkdir_p(WP_CONTENT_DIR . '/cache/assistant');
 add_action('admin_menu', function () {
 
     add_menu_page(
-            'Assistant', 'Assistant', 'administrator', 'assistant',
+            'Assistant', 'Assistant', 'administrator', 'satollo-assistant',
             function () {
                 include __DIR__ . '/index.php';
             },
@@ -16,14 +16,14 @@ add_action('admin_menu', function () {
     );
 
     add_submenu_page(
-            'assistant', 'Settings', 'Settings', 'administrator', 'assistant-settings',
+            'satollo-assistant', 'Settings', 'Settings', 'administrator', 'satollo-assistant-settings',
             function () {
                 include __DIR__ . '/settings.php';
             }
     );
 
     add_submenu_page(
-            'admin.php', 'Chat', 'Chat', 'administrator', 'assistant-chat',
+            'admin.php', 'Chat', 'Chat', 'administrator', 'satollo-assistant-chat',
             function () {
                 include __DIR__ . '/chat.php';
             }
