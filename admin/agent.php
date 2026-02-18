@@ -69,8 +69,9 @@ class AssistantAgent extends Agent {
                         ],
                         output:
                         [
+                            "Format the JSON arrays as markdown tables",
                             "Reformulate the content returned by the tools, unless the tool specifies display the contente as-is.",
-                            "Translate the answer in the language used in the request.",
+                            "Translate the answer into the language used in the request.",
                             "Use markdown to format the response.",
                             "Links must open on a new tab"
                         ]
@@ -115,7 +116,7 @@ class AssistantAgent extends Agent {
                                     $items,
                                     $data['minItems'] ?? 0,
                                     $data['maxItems'] ?? 9999
-                    ));
+                            ));
                 } else {
                     $enum = $data['enum'] ?? []; // Ok, I know...
                     $tool->addProperty(new ToolProperty(
@@ -164,6 +165,34 @@ class AssistantAgent extends Agent {
                 directory: WP_CONTENT_DIR . '/cache/assistant',
                 key: 'chat',
                 contextWindow: 2000
+        );
+    }
+}
+
+use Psr\Log\AbstractLogger;
+use Psr\Log\LogLevel;
+
+class AssistantLogger extends AbstractLogger {
+
+    /**
+     * Logs with an arbitrary level.
+     *
+     * @param mixed  $level
+     * @param string|\Stringable $message
+     * @param array  $context
+     * @return void
+     */
+    public function log($level, string|\Stringable $message, array $context = []): void {
+        if (!WP_DEBUG) {
+            return;
+        }
+
+        error_log(
+                '[' .
+                strtoupper($level) .
+                '] ' .
+                $message . ' ' . 
+                wp_json_encode($context, JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR)
         );
     }
 }

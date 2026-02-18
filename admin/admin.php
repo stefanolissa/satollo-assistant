@@ -35,13 +35,20 @@ require_once __DIR__ . '/agent.php';
 
 add_action('wp_ajax_assistant_message', function () {
 
-    $response = AssistantAgent::make($_POST['category'])->chat(
-            new \NeuronAI\Chat\Messages\UserMessage($_POST['message'])
-    );
+    try {
+        $agent = AssistantAgent::make($_POST['category']);
+        $agent->observe(new NeuronAI\Observability\LogObserver(new AssistantLogger()));
 
-    $content = $response->getContent();
+        $response = $agent->chat(
+                new \NeuronAI\Chat\Messages\UserMessage($_POST['message'])
+        );
 
-    echo wp_json_encode(['reply' => $content]);
+        $content = $response->getContent();
+
+        echo wp_json_encode(['reply' => $content]);
+    } catch (Exception $e) {
+        echo wp_json_encode(['reply' => $e->getMessage()]);
+    }
     die();
 });
 

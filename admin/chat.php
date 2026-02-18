@@ -100,6 +100,16 @@ if ($category) {
             font-size:16px;
             cursor:pointer;
         }
+
+        .message.bot table {
+            background-color: #fff;
+            border: 1px solid #666;
+            border-collapse: collapse;
+        }
+        .message.bot table td, .message.bot table th {
+            padding: 5px;
+            border: 1px solid #ddd;
+        }
     </style>
 
     <div id="container">
