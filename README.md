@@ -16,22 +16,19 @@ WordPress 6.9.
 
 ## Install
 
-The first install is by uploading the file https://www.satollo.net/repo/assistant/assistant.zip,
-then it will update automatically.
-
-Of course you can use this repo directly.
+Installation instructions [available here](https://www.satollo.net/plugins/assistant).
 
 ## Usage
 
 You need to add an API key from your preferred AI provider; see the settings page.
 
 Then you need one or more plugins implementing the abilities. If you need something to start with,
-you can try the [Mailer](https://github.com/stefanolissa/mailer) plugin (a dummy newsletter management
+you can try the [Mailer](https://github.com/stefanolissa/satollo-mailer) plugin (a dummy newsletter management
 plugin).
 
 ## Monitor
 
 To show a list of the available abilities, dump the input and output schema, log the executions
-I adapted the plugin [Monitor](https://github.com/stefanolissa/monitor).
+I adapted the plugin [Monitor](https://github.com/stefanolissa/satollo-monitor).
 
 
