@@ -21,7 +21,6 @@ add_action('admin_menu', function () {
             },
             'dashicons-smiley', 6
     );
-
 });
 
 //require_once __DIR__ . '/../vendor/autoload.php';
@@ -51,23 +50,17 @@ add_action('wp_ajax_assistant_message', function () {
     try {
         $category = sanitize_key($_POST['category'] ?? '');
         $abilities = wp_get_abilities();
-        $selected = [];
 
-        // Maybe using array_filter would be a good idea...
-        foreach ($abilities as $ability) {
-            if ($ability->get_category() !== $category) {
-                continue;
-            }
-            $selected[] = $ability;
-        }
+        $abilites = array_filter($abilites, function ($ability) use ($category) {
+            /** @var WP_Ability $ability */
+            return $category === $ability->get_category();
+        });
 
-        //error_log(print_r($selected, true));
-
-        $message = $_POST['message'];
+        $message = wp_strip_all_tags($_POST['message'] ?? '');
 
         $builder = wp_ai_client_prompt($message)
-                ->using_system_instruction(file_get_contents(__DIR__ . '/system.md'))
-                ->using_abilities(...$selected);
+                ->using_system_instruction(file_get_contents(__DIR__ . '/system.md')) // Add a settings
+                ->using_abilities(...$abilites);
 
         $result = $builder->generate_text_result();
 
@@ -76,9 +69,7 @@ add_action('wp_ajax_assistant_message', function () {
             echo wp_json_encode(['reply' => $result->get_error_message()]);
         }
 
-        //error_log(print_r($result, true));
-
-        $fr = new WP_AI_Client_Ability_Function_Resolver(...$selected);
+        $fr = new WP_AI_Client_Ability_Function_Resolver(...$abilites);
 
         while ($fr->has_ability_calls($result->toMessage())) {
             $response = $fr->execute_abilities($result->toMessage());
@@ -89,13 +80,9 @@ add_action('wp_ajax_assistant_message', function () {
             $result = $builder->with_history($result->toMessage(), $response)->generate_text_result();
             if (is_wp_error($result)) {
                 error_log($response->get_error_message);
-                // the message sequence does not validate, missing a first user message, probably I need to add
-                // it to the history...
                 break;
             }
         }
-
-        error_log(print_r($result, true));
 
         echo wp_json_encode(['reply' => $result->toText()]);
     } catch (Exception $e) {
