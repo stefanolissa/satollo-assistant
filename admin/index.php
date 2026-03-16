@@ -1,16 +1,5 @@
 <?php
 defined('ABSPATH') || exit;
-$subpage = $_GET['subpage'] ?? '';
-
-//switch ($subpage) {
-//    case 'logs':
-//        include __DIR__ . '/logs.php';
-//        return;
-//    case 'view':
-//        include __DIR__ . '/view.php';
-//        return;
-//}
-
 
 $categories = wp_get_ability_categories();
 $abilities = wp_get_abilities();
@@ -41,10 +30,6 @@ $abilities = wp_get_abilities();
     <h2>Welcome,</h2>
     <p>here there are different set of abilities I can use to help in your daily work.</p>
 
-<!--    <p>
-        <a href="?page=monitor-abilities">List</a> | <a href="?page=monitor-abilities&subpage=logs">Logs</a>
-    </p>-->
-
     <div class="categories">
         <?php foreach ($categories as $category) { ?>
 
@@ -57,13 +42,11 @@ $abilities = wp_get_abilities();
             }
             ?>
 
-            <a href="?page=satollo-assistant-chat&category=<?= rawurlencode($category->get_slug()); ?>" class="category">
+            <a href="?page=assistant&subpage=chat&category=<?= rawurlencode($category->get_slug()); ?>" class="category">
                 <h3><?= esc_html($category->get_label()) ?></h3>
                 <small><?= $count ?> abilities</small>
                 <p><?= esc_html($category->get_description()) ?></p>
-
             </a>
-
 
         <?php } ?>
 

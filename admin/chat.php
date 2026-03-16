@@ -1,23 +1,15 @@
 <?php
 defined('ABSPATH') || exit;
 
-//$subpage = $_GET['subpage'] ?? '';
-//
-//switch ($subpage) {
-//    case 'settings':
-//        include __DIR__ . '/settings.php';
-//        return;
-//}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     check_admin_referer('bulk-abilities');
     update_option('mcp-server', $_POST['data'] ?? []);
 }
 
-require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/agent.php';
+//require_once __DIR__ . '/../vendor/autoload.php';
+//require_once __DIR__ . '/agent.php';
 
-AssistantAgent::make()->resolveChatHistory()->flushAll();
+//AssistantAgent::make()->resolveChatHistory()->flushAll();
 
 $category = wp_get_ability_category(sanitize_key($_GET['category'] ?? ''));
 $category_slug = $category ? $category->get_slug() : '';

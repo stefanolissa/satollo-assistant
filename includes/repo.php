@@ -3,13 +3,13 @@
 defined('ABSPATH') || exit;
 
 add_filter('update_plugins_satollo-assistant', function ($update, $plugin_data, $plugin_file, $locales) {
-    $data = get_option('satollo_assistant_update_data');
+    $data = get_option('assistant_update_data');
     if ($data && $data->updated < time() - WEEK_IN_SECONDS || isset($_GET['force-check'])) {
         $data = false;
     }
 
     if (!$data) {
-        $response = wp_remote_get('https://www.satollo.net/repo/satollo-assistant/plugin.json');
+        $response = wp_remote_get('https://www.satollo.net/repo/assistant/plugin.json');
         $data = json_decode(wp_remote_retrieve_body($response));
         if (is_object($data)) {
             $data->updated = time();
@@ -22,8 +22,8 @@ add_filter('update_plugins_satollo-assistant', function ($update, $plugin_data, 
         $update = [
             'version' => $data->version,
             'slug' => 'satollo-assistant',
-            'url' => 'https://www.satollo.net/plugins/satollo-assistant',
-            'package' => 'https://www.satollo.net/repo/satollo-assistant/satollo-assistant.zip'
+            'url' => 'https://www.satollo.net/plugins/assistant',
+            'package' => 'https://www.satollo.net/repo/assistant/assistant.zip'
         ];
         return $update;
     } else {
@@ -49,14 +49,14 @@ add_filter('plugins_api', function ($res, $action, $args) {
         return $res;
     }
 
-    $response = wp_remote_get('https://www.satollo.net/repo/satollo-assistant/CHANGELOG.md');
+    $response = wp_remote_get('https://www.satollo.net/repo/assistant/CHANGELOG.md');
     $changelog = '';
     if (wp_remote_retrieve_response_code($response) == '200') {
         $changelog = wp_remote_retrieve_body($response);
         $changelog = satollo_assistant_render_markdown($changelog);
     }
 
-    $response = wp_remote_get('https://www.satollo.net/repo/satollo-assistant/README.md');
+    $response = wp_remote_get('https://www.satollo.net/repo/assistant/README.md');
     $readme = '';
     if (wp_remote_retrieve_response_code($response) == '200') {
         $readme = wp_remote_retrieve_body($response);
@@ -69,7 +69,7 @@ add_filter('plugins_api', function ($res, $action, $args) {
     $res->version = SATOLLO_MAILER_VERSION;
     $res->author = '<a href="https://www.satollo.net">Stefano Lissa</a>';
     $res->homepage = 'https://www.satollo.net/plugins/assistant';
-    $res->download_link = 'https://www.satollo.net/repo/satollo-assistant/satollo-assistant.zip';
+    $res->download_link = 'https://www.satollo.net/repo/assistant/assistant.zip';
 
     $res->sections = array(
         'description' => $readme,
@@ -77,13 +77,13 @@ add_filter('plugins_api', function ($res, $action, $args) {
     );
 
     $res->banners = [
-        'low' => 'https://www.satollo.net/repo/satollo-assistant/banner.png',
-        'high' => 'https://www.satollo.net/repo/satollo-assistant/banner.png'
+        'low' => 'https://www.satollo.net/repo/assistant/banner.png',
+        'high' => 'https://www.satollo.net/repo/assistant/banner.png'
     ];
 
     $res->icons = [
-        '1x' => 'https://www.satollo.net/repo/satollo-assistant/icon.png',
-        '2x' => 'https://www.satollo.net/repo/satollo-assistant/icon.png'
+        '1x' => 'https://www.satollo.net/repo/assistant/icon.png',
+        '2x' => 'https://www.satollo.net/repo/assistant/icon.png'
     ];
 
     return $res;
