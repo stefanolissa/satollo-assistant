@@ -24,7 +24,7 @@ class AssistantAgent extends Agent {
     }
 
     protected function provider(): AIProviderInterface {
-        $settings = get_option('satollo_assistant', []);
+        $settings = get_option('assistant_settings', []);
         switch ($settings['provider']) {
             case 'mistral':
                 return new NeuronAI\Providers\Mistral\Mistral(
@@ -57,25 +57,27 @@ class AssistantAgent extends Agent {
         if ($category) {
             $instructions = $category->get_meta()['instructions'] ?? '';
         }
-        return (string) new SystemPrompt(
-                        background:
-                        [
-                            "Use a friendly tone and be very short when answering.",
-                            "User only the provided tools. If the correct tool cannot be found reply there is no tool to complete the request.",
-                            $instructions
-                        ],
-                        steps:
-                        [
-                        ],
-                        output:
-                        [
-                            "Format the JSON arrays as markdown tables",
-                            "Reformulate the content returned by the tools, unless the tool specifies display the contente as-is.",
-                            "Translate the answer into the language used in the request.",
-                            "Use markdown to format the response.",
-                            "Links must open on a new tab"
-                        ]
-                );
+        return file_get_contents(__DIR__ . '/system.md') . ' ' . $instructions;
+        /*
+          return (string) new SystemPrompt(
+          background:
+          [
+          "Use a friendly tone and be very short when answering.",
+          "User only the provided tools. If the correct tool cannot be found reply there is no tool to complete the request.",
+          $instructions
+          ],
+          steps:
+          [
+          ],
+          output:
+          [
+          "Format the JSON arrays as markdown tables",
+          "Reformulate the content returned by the tools, unless the tool specifies display the contente as-is.",
+          "Translate the answer into the language used in the request.",
+          "Use markdown to format the response.",
+          "Links must open on a new tab"
+          ]
+          ); */
     }
 
     protected function tools(): array {
@@ -93,13 +95,16 @@ class AssistantAgent extends Agent {
                 continue;
             }
 
-            // TODO: Use the ability label?
-            $tool = Tool::make(
-                    str_replace('/', '-', $ability->get_name()),
-                    $ability->get_description() . ' ' . $ability->get_meta_item('instructions', ''));
+            $tool_name = str_replace('/', '-', $ability->get_name());
+            $tool_description = $ability->get_description() . ' ' . $ability->get_meta_item('instructions', '');
+
+            $tool = Tool::make($tool_name, $tool_description);
+
             $properties = $ability->get_input_schema()['properties'] ?? [];
             $required = $ability->get_input_schema()['required'] ?? [];
 
+            // Neuron tool does not accept a schema (argh!!!)
+            // This is my dumb conversion code...
             foreach ($properties as $name => $data) {
                 if ($data['type'] === 'array') {
                     $items = ToolProperty::make(
@@ -132,7 +137,12 @@ class AssistantAgent extends Agent {
 
             $tool->setCallable(function (...$args) use ($ability) {
 
-                $r = $ability->execute($args);
+                // Null must be passed to abilities without an input schema
+                if (empty($args)) {
+                    $r = $ability->execute(null);
+                } else {
+                    $r = $ability->execute($args);
+                }
 
                 if (is_wp_error($r)) {
                     return $r->get_error_message();
@@ -140,16 +150,10 @@ class AssistantAgent extends Agent {
 
                 if (is_array($r)) {
                     if (count($r) === 1) {
+                        // ??? I don't remember :-)
                         return array_shift($r);
                     }
                     return wp_json_encode($r);
-                    $b = '';
-                    foreach ($r as $k => $v) {
-                        $b .= $k . ': ' . $v . "\n";
-                    }
-
-                    return $b;
-                    //return wp_json_encode($r);
                 }
                 return $r;
             });
@@ -162,8 +166,8 @@ class AssistantAgent extends Agent {
 
     protected function chatHistory(): ChatHistoryInterface {
         return new FileChatHistory(
-                directory: WP_CONTENT_DIR . '/cache/assistant',
-                key: 'chat',
+                directory: __DIR__,
+                key: 'neuron',
                 contextWindow: 2000
         );
     }

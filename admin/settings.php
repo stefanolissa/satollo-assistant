@@ -1,33 +1,24 @@
 <?php
 defined('ABSPATH') || exit;
-$subpage = $_GET['subpage'] ?? '';
-
-//switch ($subpage) {
-//    case 'logs':
-//        include __DIR__ . '/logs.php';
-//        return;
-//    case 'view':
-//        include __DIR__ . '/view.php';
-//        return;
-//}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    check_admin_referer('bulk-abilities');
+    check_admin_referer('bulk-abilities'); // by the wp list table...
     $settings = wp_unslash($_POST['data']);
-    update_option('satollo_assistant_settings', $settings ?? []);
+    update_option('assistant_settings', $settings ?? []);
 
     // When the provider or the model is changed, the chat history must be deleted
     // (I should create a chat history for each provider+model but I'm lazy and probably
     // is not worth the time)
-    require_once __DIR__ . '/../vendor/autoload.php';
-    require_once __DIR__ . '/agent.php';
-
-    AssistantAgent::make()->resolveChatHistory()->flushAll();
+//    require_once __DIR__ . '/../vendor/autoload.php';
+//    require_once __DIR__ . '/agent.php';
+//
+//    AssistantAgent::make()->resolveChatHistory()->flushAll();
 }
 
-$settings = get_option('satollo_assistant_settings', []);
+$settings = get_option('assistant_settings', []);
 $enabled_abilities = $settings['abilities'] ?? [];
 $provider = $settings['provider'] ?? 'mistral';
+$framework = $settings['framework'] ?? 'neuron';
 
 class Abilities_List_Table extends WP_List_Table {
 
@@ -146,6 +137,26 @@ $table->prepare_items();
             of your choice, please.
         </p>
 
+        <h3>AI framework</h3>
+
+        <p>
+            <label>
+                <input type="radio" name="data[framework]" value="neuron" <?php echo $framework === 'neuron' ? 'checked' : ''; ?>>
+                Neuron AI
+            </label>
+        </p>
+
+        <p>
+            <label>
+                <input type="radio" name="data[framework]" value="wp" <?php echo $framework === 'wp' ? 'checked' : ''; ?>>
+                WP AI Client
+            </label>
+        </p>
+
+        <h3>AI provider</h3>
+        <p>
+            Only for Neuron AI.
+        </p>
         <table class="widefat">
             <thead>
                 <tr>
@@ -238,5 +249,5 @@ $table->prepare_items();
     <p>
         That helps me when supporting you...
     </p>
-    <pre><?php echo esc_html(print_r(get_option('satollo_assistant_settings'), true)); ?></pre>
+    <pre><?php echo esc_html(print_r(get_option('assistant_settings'), true)); ?></pre>
 </div>

@@ -1,26 +1,29 @@
 <?php
 defined('ABSPATH') || exit;
 
-if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
-    check_admin_referer('bulk-abilities');
-    update_option('mcp-server', $_POST['data'] ?? []);
+$assistant_settings = get_option('assistant_settimgs', []);
+
+if (($assistant_settings['framework'] ?? 'neuron') === 'neuron') {
+    require_once __DIR__ . '/../vendor/autoload.php';
+    require_once __DIR__ . '/agent.php';
+
+    AssistantAgent::make()->resolveChatHistory()->flushAll();
+} else {
+    // Delete the chat history
+    unlink(__DIR__ . '/messages.txt');
 }
 
-//require_once __DIR__ . '/../vendor/autoload.php';
-//require_once __DIR__ . '/agent.php';
-
-//AssistantAgent::make()->resolveChatHistory()->flushAll();
-
 $category = wp_get_ability_category(sanitize_key($_GET['category'] ?? ''));
-$category_slug = $category ? $category->get_slug() : '';
 
 $abilites = wp_get_abilities();
 if ($category) {
+    $category_slug = $category->get_slug();
     $abilites = array_filter($abilites, function ($ability) use ($category_slug) {
         /** @var WP_Ability $ability */
         return $category_slug === $ability->get_category();
     });
 }
+
 ?>
 <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
 <div class="wrap">
@@ -29,17 +32,6 @@ if ($category) {
     <?php } else { ?>
         <h2>How may I help you?</h2>
     <?php } ?>
-
-<!--    <div class="notice notice-warning">
-        <p>
-            Please note: the Assistant capabilities depend on the Abilities provided by your site via plugins and
-            themes and how they're described and implemented. The quality of the interaction depends on the
-            AI provider you choose in the settings.
-        </p>
-        <p>
-            <strong>Be aware the Abilities available could be destructive!</strong>
-        </p>
-    </div>-->
 
 
     <style>
@@ -109,19 +101,19 @@ if ($category) {
         <div id="chat">
             <div class="message bot">
                 <?php if ($category) { ?>
-                Welcome. Here the available abilities:
-                <ul>
-                    <?php
-                    foreach ($abilites as $ability) {
-                        echo '<li>', esc_html($ability->get_label());
-                        echo '<br><span style="font-size: .8em">', esc_html($ability->get_description()), '</span>';
-                        echo '</li>';
-                    }
-                    ?>
-                </ul>
+                    Welcome. Here the available abilities:
+                    <ul>
+                        <?php
+                        foreach ($abilites as $ability) {
+                            echo '<li>', esc_html($ability->get_label());
+                            echo '<br><span style="font-size: .8em">', esc_html($ability->get_description()), '</span>';
+                            echo '</li>';
+                        }
+                        ?>
+                    </ul>
                 <?php } else { ?>
-                Welcome. Try asking "available tools" to know the abilities I can use.
-            <?php } ?>
+                    Welcome. Try asking "available tools" to know the abilities I can use.
+                <?php } ?>
             </div>
         </div>
 
@@ -133,63 +125,63 @@ if ($category) {
         <div id="status"></div>
 
         <script>
-        const micBtn = document.getElementById('micBtn');
-        const voiceInput = document.getElementById('msgInput');
-        const statusTxt = document.getElementById('status');
-        // Check for browser support
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const micBtn = document.getElementById('micBtn');
+            const voiceInput = document.getElementById('msgInput');
+            const statusTxt = document.getElementById('status');
+            // Check for browser support
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
 
-            // Initialize Web Speech API
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const recognition = new SpeechRecognition();
+                // Initialize Web Speech API
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const recognition = new SpeechRecognition();
 
-            // Configuration
-            recognition.continuous = false; // Stop after one sentence
-            recognition.lang = 'en-US'; // Set language (optional)
-            recognition.interimResults = false; // Only show final results
+                // Configuration
+                recognition.continuous = false; // Stop after one sentence
+                recognition.lang = 'en-US'; // Set language (optional)
+                recognition.interimResults = false; // Only show final results
 
-            // Event: When microphone button is clicked
-            micBtn.addEventListener('click', () => {
-                if (micBtn.classList.contains('listening')) {
-                    recognition.stop();
-                } else {
-                    recognition.start();
-                }
-            });
+                // Event: When microphone button is clicked
+                micBtn.addEventListener('click', () => {
+                    if (micBtn.classList.contains('listening')) {
+                        recognition.stop();
+                    } else {
+                        recognition.start();
+                    }
+                });
 
-            // Event: Recording started
-            recognition.onstart = () => {
-                micBtn.classList.add('listening');
-                statusTxt.innerText = "Listening...";
-                voiceInput.placeholder = "Listening...";
-            };
+                // Event: Recording started
+                recognition.onstart = () => {
+                    micBtn.classList.add('listening');
+                    statusTxt.innerText = "Listening...";
+                    voiceInput.placeholder = "Listening...";
+                };
 
-            // Event: Recording ended
-            recognition.onend = () => {
-                micBtn.classList.remove('listening');
-                statusTxt.innerText = "";
-                voiceInput.placeholder = "Click the mic and speak...";
-            };
+                // Event: Recording ended
+                recognition.onend = () => {
+                    micBtn.classList.remove('listening');
+                    statusTxt.innerText = "";
+                    voiceInput.placeholder = "Click the mic and speak...";
+                };
 
-            // Event: Result received
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                voiceInput.value = transcript;
-            };
+                // Event: Result received
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    voiceInput.value = transcript;
+                };
 
-            // Event: Error handling
-            recognition.onerror = (event) => {
-                console.error("Speech recognition error", event.error);
-                statusTxt.innerText = "Error: " + event.error;
-                micBtn.classList.remove('listening');
-            };
+                // Event: Error handling
+                recognition.onerror = (event) => {
+                    console.error("Speech recognition error", event.error);
+                    statusTxt.innerText = "Error: " + event.error;
+                    micBtn.classList.remove('listening');
+                };
 
-        } else {
-            // Fallback for unsupported browsers
-            micBtn.style.display = 'none';
-            voiceInput.placeholder = "Voice input not supported in this browser.";
-            console.log("Web Speech API not supported.");
-        }
+            } else {
+                // Fallback for unsupported browsers
+                micBtn.style.display = 'none';
+                voiceInput.placeholder = "Voice input not supported in this browser.";
+                console.log("Web Speech API not supported.");
+            }
         </script>
 
         <script>

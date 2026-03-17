@@ -30,6 +30,8 @@ $abilities = wp_get_abilities();
     <h2>Welcome,</h2>
     <p>here there are different set of abilities I can use to help in your daily work.</p>
 
+    <p><a href="?page=assistant&subpage=settings">See the settings</a></p>
+
     <div class="categories">
         <?php foreach ($categories as $category) { ?>
 
