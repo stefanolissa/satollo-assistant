@@ -16,6 +16,10 @@
  */
 defined('ABSPATH') || exit;
 
+if (version_compare(wp_get_wp_version(), '6.9', '<=')) {
+    return;
+}
+
 define('ASSISTANT_VERSION', '0.0.7');
 define('ASSISTANT_CACHE_DIR', __DIR__ . '/cache');
 
