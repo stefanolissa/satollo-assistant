@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.7
+- Added the the Neuron/WP framework option
+- Fixed the tool call with the WP AI Client
+
 ## 0.0.6
 - New package name
 

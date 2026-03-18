@@ -3,6 +3,9 @@
 defined('ABSPATH') || exit;
 
 add_filter('update_plugins_satollo-assistant', function ($update, $plugin_data, $plugin_file, $locales) {
+    if (WP_DEBUG) {
+        error_log('Assistant - update_plugins call');
+    }
     $data = get_option('assistant_update_data');
     if ($data && $data->updated < time() - WEEK_IN_SECONDS || isset($_GET['force-check'])) {
         $data = false;
@@ -45,6 +48,9 @@ function satollo_assistant_render_markdown($text) {
 }
 
 add_filter('plugins_api', function ($res, $action, $args) {
+    if (WP_DEBUG) {
+        error_log('Assistant - plugin_api call');
+    }
     if ($action !== 'plugin_information' || $args->slug !== 'satollo-assistant') {
         return $res;
     }
@@ -64,9 +70,9 @@ add_filter('plugins_api', function ($res, $action, $args) {
     }
 
     $res = new stdClass();
-    $res->name = 'Mailer';
+    $res->name = 'Assistant';
     $res->slug = 'assistant';
-    $res->version = SATOLLO_MAILER_VERSION;
+    $res->version = ASSISTANT_VERSION;
     $res->author = '<a href="https://www.satollo.net">Stefano Lissa</a>';
     $res->homepage = 'https://www.satollo.net/plugins/assistant';
     $res->download_link = 'https://www.satollo.net/repo/assistant/assistant.zip';

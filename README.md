@@ -7,7 +7,7 @@ AI.
 
 This plugin is an experiment, do not use it on production sites.
 
-Abilities can execute destructive tasks it's your own responsability to ask or not ask the
+Abilities can execute destructive tasks it's your own responsibility to ask or not ask the
 assistant to invoke them. A configuration is under work to enable/disable specific abilities.
 
 ## Prerequisites
@@ -22,13 +22,9 @@ Installation instructions [available here](https://www.satollo.net/plugins/assis
 
 You need to add an API key from your preferred AI provider; see the settings page.
 
-Then you need one or more plugins implementing the abilities. If you need something to start with,
-you can try the [Mailer](https://github.com/stefanolissa/satollo-mailer) plugin (a dummy newsletter management
-plugin).
-
 ## Monitor
 
 To show a list of the available abilities, dump the input and output schema, log the executions
-I adapted the plugin [Monitor](https://github.com/stefanolissa/satollo-monitor).
+I adapted the plugin [Monitor](https://www.satollo.net/plugins/monitor).
 
 

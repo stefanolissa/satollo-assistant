@@ -3,6 +3,11 @@ defined('ABSPATH') || exit;
 
 $assistant_settings = get_option('assistant_settings', []);
 
+$secret = get_option('assistant_secret');
+if (!$secret) {
+    update_option('assistant_secret', wp_generate_password(12, false, false), false);
+}
+
 if (($assistant_settings['framework'] ?? 'neuron') === 'neuron') {
     require_once __DIR__ . '/../vendor/autoload.php';
     require_once __DIR__ . '/agent.php';
@@ -10,40 +15,31 @@ if (($assistant_settings['framework'] ?? 'neuron') === 'neuron') {
     AssistantAgent::make()->resolveChatHistory()->flushAll();
 } else {
     // Delete the chat history
-    $secret = get_option('assistant_secret');
-    @unlink(ASSISTANT_CACHE_DIR . '/' . get_current_user_id() . '-admin-' . $secret . '.txt');
-
+    if (is_user_logged_in()) {
+        @unlink(ASSISTANT_CACHE_DIR . '/' . get_current_user_id() . '-' . $secret . '.txt');
+    }
 }
 
-$category = wp_get_ability_category(sanitize_key($_GET['category'] ?? ''));
 
-$abilites = wp_get_abilities();
-if ($category) {
-    $category_slug = $category->get_slug();
-    $abilites = array_filter($abilites, function ($ability) use ($category_slug) {
-        /** @var WP_Ability $ability */
-        return $category_slug === $ability->get_category();
-    });
-}
+$categories = ['assistant'];
 
+$abilites = array_filter(wp_get_abilities(), function ($ability) use ($categories) {
+    /** @var WP_Ability $ability */
+    return in_array($ability->get_category(), $categories);
+});
 ?>
 <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
 <div class="wrap">
-    <?php if ($category) { ?>
-        <h2>How may I help you with the "<?php echo esc_html($category->get_label()); ?>" tools?</h2>
-    <?php } else { ?>
-        <h2>How may I help you?</h2>
-    <?php } ?>
 
 
     <style>
         #container {
             font-family: Arial, sans-serif;
-            background:#f5f5f5;
+            xbackground:#f5f5f5;
             margin:0;
             display:flex;
             flex-direction:column;
-            height:70vh;
+            height:60vh;
         }
         #chat {
             flex:1;
@@ -52,13 +48,14 @@ if ($category) {
         }
         .message {
             margin:10px 0;
-            max-width:70%;
+            xmax-width:70%;
             padding:10px 15px;
             border-radius:12px;
             line-height:1.4;
+            font-size: 1rem;
         }
         .user   {
-            background:#0084ff;
+            background:#00aaff;
             color:#fff;
             align-self:flex-end;
         }
@@ -102,20 +99,18 @@ if ($category) {
 
         <div id="chat">
             <div class="message bot">
-                <?php if ($category) { ?>
-                    Welcome. Here the available abilities:
-                    <ul>
-                        <?php
-                        foreach ($abilites as $ability) {
-                            echo '<li>', esc_html($ability->get_label());
-                            echo '<br><span style="font-size: .8em">', esc_html($ability->get_description()), '</span>';
-                            echo '</li>';
-                        }
-                        ?>
-                    </ul>
-                <?php } else { ?>
-                    Welcome. Try asking "available tools" to know the abilities I can use.
-                <?php } ?>
+
+                Welcome. Here the available abilities:
+                <ul>
+                    <?php
+                    foreach ($abilites as $ability) {
+                        echo '<li>', esc_html($ability->get_label());
+                        //echo '<br><span style="font-size: .8em">', esc_html($ability->get_description()), '</span>';
+                        echo '</li>';
+                    }
+                    ?>
+                </ul>
+
             </div>
         </div>
 
@@ -191,8 +186,9 @@ if ($category) {
             const chatDiv = document.getElementById('chat');
             const msgInput = document.getElementById('msgInput');
             const sendBtn = document.getElementById('sendBtn');
-            const assetsUrl = '<?php echo plugins_url('assets', __FILE__); ?>';
-            const category = '<?php echo sanitize_key($category_slug); ?>';
+            const assetsUrl = '<?php echo plugin_dir_url(__FILE__); ?>../assets';
+            const category = '';
+            const ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
 
             // -----------------------------------------------------------------
             // Helper: append a bubble (same as before)
@@ -216,10 +212,10 @@ if ($category) {
             async function getBotResponseFromServer(userMsg) {
                 try {
                     const x = new FormData();
-                    x.append("action", "assistant_message");
+                    x.append("action", "assistant_prompt");
                     x.append("category", category);
                     x.append("message", userMsg);
-                    x.append("_wpnonce", '<?php echo esc_js(wp_create_nonce('prompt')); ?>');
+                    x.append("_wpnonce", '<?php echo esc_js(wp_create_nonce('shortcode')); ?>');
                     const response = await fetch(ajaxurl,
                             {
                                 method: 'POST',
