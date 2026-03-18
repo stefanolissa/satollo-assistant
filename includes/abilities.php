@@ -43,6 +43,23 @@ add_action('wp_abilities_api_init', function () {
                 ],
                 'execute_callback' => function ($input) {
                     $user_id = get_current_user_id();
+
+                    // No... see wp-includes/user.php - why there is not a dedicated function
+                    // not coupled with $_POST??? OMG...
+                    global $errors;
+                    $errors = null;
+                    $_POST['user_id'] = $user_id;
+                    $_POST['email'] = sanitize_email($input['email']);
+
+                    send_confirmation_on_profile_email();
+
+                    if ($errors) {
+                        return ['result' => 'The email cannot be change due to ' . $errors->get_error_message()];
+                    } else {
+                        return['result' => 'Email change started, check your mailbox to confirm'];
+                    }
+
+                    /*
                     $email = sanitize_email($input['email']);
 
                     if (!$email) {
@@ -59,6 +76,7 @@ add_action('wp_abilities_api_init', function () {
                     } else {
                         return['result' => 'Email change started, check your mailbox to confirm'];
                     }
+                    */
                 },
                 'permission_callback' => function () {
                     return is_user_logged_in();

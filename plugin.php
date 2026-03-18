@@ -31,7 +31,9 @@ add_action('init', function () {
     if (!is_admin() && (!defined('REST_REQUEST') || !REST_REQUEST)) {
         add_shortcode('assistant', function ($attrs, $content) {
             if (!is_user_logged_in()) {
-                return 'Available only to logged in users';
+                return '<p style="padding: 1em; background-color: #eee"><strong>To use the assistant you need to '
+                . '<a href="' . site_url('wp-login.php') . '?redirect_to=/assistant/assistant">log in</a> '
+                . 'or <a href="' . site_url('wp-login.php') . '?action=register">create an account</a>.</strong></p>';
             }
 
             // Clear the chat history
