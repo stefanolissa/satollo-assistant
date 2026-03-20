@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 
 class AssistantClientPromptBuilder extends WP_AI_Client_Prompt_Builder {
 
@@ -50,6 +51,10 @@ class AssistantClientPromptBuilder extends WP_AI_Client_Prompt_Builder {
 
         $messages = $property->getValue($builder);
         $messages[] = $message;
+
+        // Shortedn the message array if needed
+        // ...
+        
         $property->setValue($builder, $messages);
     }
 

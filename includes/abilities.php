@@ -60,23 +60,23 @@ add_action('wp_abilities_api_init', function () {
                     }
 
                     /*
-                    $email = sanitize_email($input['email']);
+                      $email = sanitize_email($input['email']);
 
-                    if (!$email) {
-                        return['result' => 'The provided email is not valid.'];
-                    }
+                      if (!$email) {
+                      return['result' => 'The provided email is not valid.'];
+                      }
 
-                    $result = wp_update_user([
-                        'ID' => $user_id,
-                        'user_email' => $input['email'],
-                    ]);
+                      $result = wp_update_user([
+                      'ID' => $user_id,
+                      'user_email' => $input['email'],
+                      ]);
 
-                    if (is_wp_error($result)) {
-                        return ['result' => 'The email cannot be change due to ' . $result->get_error_message()];
-                    } else {
-                        return['result' => 'Email change started, check your mailbox to confirm'];
-                    }
-                    */
+                      if (is_wp_error($result)) {
+                      return ['result' => 'The email cannot be change due to ' . $result->get_error_message()];
+                      } else {
+                      return['result' => 'Email change started, check your mailbox to confirm'];
+                      }
+                     */
                 },
                 'permission_callback' => function () {
                     return is_user_logged_in();
@@ -172,7 +172,6 @@ add_action('wp_abilities_api_init', function () {
 
                     //return ['result' => 'Admit it, for a moment, you believed it would have worked.'];
                     return ['result' => 'Was joking the role the role cannot be changed!'];
-
                 },
                 'permission_callback' => function () {
                     return is_user_logged_in();
@@ -185,6 +184,109 @@ add_action('wp_abilities_api_init', function () {
     if ($r === null) {
         error_log('Ability not registsred');
     }
+
+    $r = wp_register_ability('assistant/list-languages',
+            [
+                'label' => 'List the available languages',
+                'description' => 'List the available languages',
+                'category' => 'assistant',
+                'input_schema' => [],
+                'output_schema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'result' => [
+                            'type' => 'array',
+                            'description' => 'The list of the languages as JSON',
+                        ],
+                    ],
+                ],
+                'execute_callback' => function ($input = null) {
+                    $locales = get_available_languages(); // Only the code xx_YY
+                    if (!$locales) {
+                        $locales[] = 'en_US';
+                    }
+
+                    require_once ABSPATH . 'wp-admin/includes/translation-install.php';
+                    $translations = wp_get_available_translations();
+                    $translations['en_US'] = [
+                        'language' => 'en_US',
+                        'english_name' => 'English (United States)',
+                        'native_name' => 'English (United States)',
+                        'iso' => ['en']
+                    ];
+
+                    error_log(print_r($locales, true));
+                    //error_log(print_r($translations, true));
+
+                    $languages = array();
+                    foreach ($locales as $locale) {
+                        if (isset($translations[$locale])) {
+                            $translation = $translations[$locale];
+                            $languages[] = array(
+                                //'language' => $translation['language'],
+                                'code' => $translation['language'],
+                                'native_name' => $translation['native_name'],
+                                //'lang' => current($translation['iso']),
+                            );
+
+                        } else {
+                            continue;
+//                            $languages[] = array(
+//                                'language' => $locale,
+//                                'native_name' => $locale,
+//                                'lang' => '',
+//                            );
+                        }
+                    }
+                    error_log(print_r($languages, true));
+                    return $languages;
+                },
+                'permission_callback' => function () {
+                    return true;
+                    //return is_user_logged_in();
+                },
+                'meta' => [
+                ],
+            ]
+    );
+
+                    $r = wp_register_ability('assistant/change-language',
+            [
+                'label' => 'Change my language',
+                'description' => 'Change the current user role',
+                'category' => 'assistant',
+                'input_schema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'language_code' => [
+                            'type' => 'string',
+                            'description' => 'The new language code, use the languages list to find the codes',
+                        ]
+                    ],
+                    'required' => ['language_code'],
+                    'additionalProperties' => false,
+                ],
+                'output_schema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'result' => [
+                            'type' => 'string',
+                            'description' => 'The result of the operation',
+                        ],
+                    ],
+                ],
+                'execute_callback' => function ($input) {
+                        error_log($input['language_code']);
+                    //return ['result' => 'Admit it, for a moment, you believed it would have worked.'];
+                    return ['result' => 'The language was changed'];
+                },
+                'permission_callback' => function () {
+                    return is_user_logged_in();
+                },
+                'meta' => [
+                ],
+            ]
+    );
 //    $r = wp_register_ability('test/site-health',
 //            [
 //                'label' => 'Checks the site health',

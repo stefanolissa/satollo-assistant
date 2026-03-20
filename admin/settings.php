@@ -179,6 +179,9 @@ $table->prepare_items();
                     </td>
                     <td>
                         <input type="text" name="data[mistral_key]" class="key" value="<?php echo esc_attr($settings['mistral_key'] ?? ''); ?>">
+                        <input type="checkbox" name="data[mistral_use_wp_key]" value="" <?php echo isset($settings['mistral_use_wp_key']) ? 'checked' : ''; ?>> Use the WP stored key
+                            <?= get_option('connectors_ai_mistral_api_key') ? '(present)':'(not present)' ?>
+
                     </td>
                 </tr>
                 <tr>

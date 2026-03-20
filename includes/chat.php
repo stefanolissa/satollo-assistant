@@ -1,6 +1,8 @@
 <?php
 defined('ABSPATH') || exit;
 
+/** @var array $categories */
+
 $assistant_settings = get_option('assistant_settings', []);
 
 $secret = get_option('assistant_secret');
@@ -10,7 +12,7 @@ if (!$secret) {
 
 if (($assistant_settings['framework'] ?? 'neuron') === 'neuron') {
     require_once __DIR__ . '/../vendor/autoload.php';
-    require_once __DIR__ . '/agent.php';
+    require_once __DIR__ . '/agent-neuron.php';
 
     AssistantAgent::make()->resolveChatHistory()->flushAll();
 } else {
@@ -21,7 +23,7 @@ if (($assistant_settings['framework'] ?? 'neuron') === 'neuron') {
 }
 
 
-$categories = ['assistant'];
+//$categories = ['assistant'];
 
 $abilites = array_filter(wp_get_abilities(), function ($ability) use ($categories) {
     /** @var WP_Ability $ability */
