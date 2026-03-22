@@ -11,6 +11,7 @@ function assistant_ajax_prompt() {
         try {
             // TODO: From settings, get the allowed abilities or categories
             $agent = AssistantAgent::make('assistant');
+            $agent->observe(new NeuronAI\Observability\LogObserver(new AssistantLogger()));
 
             $message = wp_strip_all_tags($_POST['message'] ?? '');
 
@@ -18,7 +19,7 @@ function assistant_ajax_prompt() {
                     new \NeuronAI\Chat\Messages\UserMessage($message)
             );
 
-            $content = $response->getContent();
+            $content = $response->getMessage()->getContent();
 
             echo wp_json_encode(['reply' => $content]);
         } catch (Exception $e) {

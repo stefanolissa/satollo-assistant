@@ -22,22 +22,12 @@ class AssistantAgent extends Agent {
     function __construct($category = 0) {
         parent::__construct();
         $this->category = sanitize_key($category);
-        //$this->observe(new NeuronAI\Observability\LogObserver(new AssistantLogger()));
     }
 
     protected function provider(): AIProviderInterface {
         $settings = get_option('assistant_settings', []);
         switch ($settings['provider']) {
             case 'mistral':
-                if (isset($settings['mistral_use_wp_key'])) {
-                    $key = get_option('connectors_ai_mistral_api_key');
-                    if (empty($key)) {
-                        $key = $settings['mistral_key'];
-                    }
-                } else {
-                    $key = $settings['mistral_key'];
-                }
-
                 return new NeuronAI\Providers\Mistral\Mistral(
                         key: $settings['mistral_key'],
                         model: $settings['mistral_model'] ?: 'mistral-medium-2508',
@@ -69,26 +59,6 @@ class AssistantAgent extends Agent {
             $instructions = $category->get_meta()['instructions'] ?? '';
         }
         return file_get_contents(__DIR__ . '/system.md') . ' ' . $instructions;
-        /*
-          return (string) new SystemPrompt(
-          background:
-          [
-          "Use a friendly tone and be very short when answering.",
-          "User only the provided tools. If the correct tool cannot be found reply there is no tool to complete the request.",
-          $instructions
-          ],
-          steps:
-          [
-          ],
-          output:
-          [
-          "Format the JSON arrays as markdown tables",
-          "Reformulate the content returned by the tools, unless the tool specifies display the contente as-is.",
-          "Translate the answer into the language used in the request.",
-          "Use markdown to format the response.",
-          "Links must open on a new tab"
-          ]
-          ); */
     }
 
     protected function tools(): array {
@@ -146,7 +116,7 @@ class AssistantAgent extends Agent {
             }
 
 
-            $tool->setCallable(function (...$args) use ($ability) {
+             $tool->setCallable(function (...$args) use ($ability) {
 
                 // Null must be passed to abilities without an input schema
                 if (empty($args)) {
@@ -173,14 +143,15 @@ class AssistantAgent extends Agent {
 
     protected function chatHistory(): ChatHistoryInterface {
         return new FileChatHistory(
-                directory: ASSISTANT_CACHE_DIR,
-                key: get_current_user_id() . '-' . get_option('assistant_secret'),
+                directory: __DIR__,
+                key: 'neuron',
                 contextWindow: 2000
         );
     }
 }
 
 use Psr\Log\AbstractLogger;
+use Psr\Log\LogLevel;
 
 class AssistantLogger extends AbstractLogger {
 
@@ -197,10 +168,6 @@ class AssistantLogger extends AbstractLogger {
             return;
         }
 
-        if ($message === 'message-saving' || $message === 'message-saved') {
-            return;
-        }
-
         error_log(
                 '[' .
                 strtoupper($level) .
@@ -209,5 +176,4 @@ class AssistantLogger extends AbstractLogger {
                 wp_json_encode($context, JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR)
         );
     }
-
 }

@@ -1,202 +1,111 @@
 <?php
 
-defined('ABSPATH') || exit;
+function assistant_ajax_admin_prompt() {
 
-use NeuronAI\Agent;
-use NeuronAI\SystemPrompt;
-use NeuronAI\Providers\AIProviderInterface;
-use NeuronAI\Providers\Anthropic\Anthropic;
-use NeuronAI\Providers\OpenAI\OpenAI;
-use NeuronAI\Chat\Messages\UserMessage;
-use NeuronAI\Tools\PropertyType;
-use NeuronAI\Tools\Tool;
-use NeuronAI\Tools\ToolProperty;
-use NeuronAI\Tools\ArrayProperty;
-use NeuronAI\Chat\History\ChatHistoryInterface;
-use NeuronAI\Chat\History\FileChatHistory;
+    current_user_can('administrator') || die();
+    check_ajax_referer('prompt');
 
-class AssistantAgent extends Agent {
+    $category = sanitize_key($_POST['category'] ?? '');
+    $message = wp_strip_all_tags($_POST['message'] ?? '');
 
-    var $category;
+    $assistant_settings = get_option('assistant_settings', []);
+    $secret = get_option('assistant_secret');
 
-    function __construct($category = 0) {
-        $this->category = sanitize_key($category);
-    }
+    if (($assistant_settings['framework'] ?? 'neuron') === 'neuron') {
 
-    protected function provider(): AIProviderInterface {
-        $settings = get_option('assistant_settings', []);
-        switch ($settings['provider']) {
-            case 'mistral':
-                return new NeuronAI\Providers\Mistral\Mistral(
-                        key: $settings['mistral_key'],
-                        model: $settings['mistral_model'] ?: 'mistral-medium-2508',
-                );
-            case 'openai':
-                return new OpenAI(
-                        key: $settings['openai_key'],
-                        model: $settings['openai_model'] ?: 'gpt-5-nano',
-                );
-            case 'anthropic':
-                return new \NeuronAI\Providers\Anthropic\Anthropic(
-                        key: $settings['anthropic_key'],
-                        model: $settings['anthropic_model'] ?: 'claude-3-haiku-20240307',
-                        parameters: ['max_tokens' => 4096]
-                );
-            case 'gemini':
-                return new \NeuronAI\Providers\Gemini\Gemini(
-                        key: $settings['gemini_key'],
-                        model: $settings['gemini_model'] ?: 'gemini-2.5-flash',
-                        parameters: []
-                );
+        require_once __DIR__ . '/../vendor/autoload.php';
+        require_once __DIR__ . '/agent-neuron.php';
+        try {
+            $agent = AssistantAgent::make($category);
+            $agent->observe(new NeuronAI\Observability\LogObserver(new AssistantLogger()));
+
+            $response = $agent->chat(
+                    new \NeuronAI\Chat\Messages\UserMessage($message)
+            );
+
+            $content = $response->getMessage()->getContent();
+
+            echo wp_json_encode(['reply' => $content]);
+        } catch (Exception $e) {
+            echo wp_json_encode(['reply' => $e->getMessage()]);
         }
-    }
+        die();
+    } else {
 
-    public function instructions(): string {
-        $instructions = '';
-        $category = wp_get_ability_category($this->category);
-        if ($category) {
-            $instructions = $category->get_meta()['instructions'] ?? '';
-        }
-        return file_get_contents(__DIR__ . '/system.md') . ' ' . $instructions;
-        /*
-          return (string) new SystemPrompt(
-          background:
-          [
-          "Use a friendly tone and be very short when answering.",
-          "User only the provided tools. If the correct tool cannot be found reply there is no tool to complete the request.",
-          $instructions
-          ],
-          steps:
-          [
-          ],
-          output:
-          [
-          "Format the JSON arrays as markdown tables",
-          "Reformulate the content returned by the tools, unless the tool specifies display the contente as-is.",
-          "Translate the answer into the language used in the request.",
-          "Use markdown to format the response.",
-          "Links must open on a new tab"
-          ]
-          ); */
-    }
+        include __DIR__ . '/agent-wp.php';
 
-    protected function tools(): array {
+        try {
+            $builder = new AssistantClientPromptBuilder($message);
+            $builder->using_system_instruction(file_get_contents(__DIR__ . '/system.md')); // Add a settings
 
-        if (!function_exists('wp_get_abilities')) {
-            return [];
-        }
-
-        $abilities = wp_get_abilities();
-        $tools = [];
-
-        foreach ($abilities as $ability) {
-
-            if ($this->category && $ability->get_category() !== $this->category) {
-                continue;
-            }
-
-            $tool_name = str_replace('/', '-', $ability->get_name());
-            $tool_description = $ability->get_description() . ' ' . $ability->get_meta_item('instructions', '');
-
-            $tool = Tool::make($tool_name, $tool_description);
-
-            $properties = $ability->get_input_schema()['properties'] ?? [];
-            $required = $ability->get_input_schema()['required'] ?? [];
-
-            // Neuron tool does not accept a schema (argh!!!)
-            // This is my dumb conversion code...
-            foreach ($properties as $name => $data) {
-                if ($data['type'] === 'array') {
-                    $items = ToolProperty::make(
-                            'items',
-                            PropertyType::fromSchema($data['items']['type']),
-                            $data['items']['description'] ?? '',
-                            false,
-                            $data['items']['enum'] ?? []
-                    );
-                    $tool->addProperty(ArrayProperty::make(
-                                    $name,
-                                    $data['description'],
-                                    in_array($name, $required),
-                                    $items,
-                                    $data['minItems'] ?? 0,
-                                    $data['maxItems'] ?? 9999
-                            ));
-                } else {
-                    $enum = $data['enum'] ?? []; // Ok, I know...
-                    $tool->addProperty(new ToolProperty(
-                                    $name,
-                                    PropertyType::fromSchema($data['type']),
-                                    $data['description'],
-                                    in_array($name, $required),
-                                    $enum
-                    ));
-                }
-            }
-
-
-            $tool->setCallable(function (...$args) use ($ability) {
-
-                // Null must be passed to abilities without an input schema
-                if (empty($args)) {
-                    $r = $ability->execute(null);
-                } else {
-                    $r = $ability->execute($args);
-                }
-
-                if (is_wp_error($r)) {
-                    return $r->get_error_message();
-                }
-
-                if (is_array($r)) {
-                    if (count($r) === 1) {
-                        // ??? I don't remember :-)
-                        return array_shift($r);
-                    }
-                    return wp_json_encode($r);
-                }
-                return $r;
+            $abilities = array_filter(wp_get_abilities(), function ($ability) use ($category) {
+                /** @var WP_Ability $ability */
+                return $category === $ability->get_category();
             });
+            $builder->using_abilities(...$abilities);
 
-            $tools[] = $tool;
+            $messages = unserialize(@file_get_contents(ASSISTANT_CACHE_DIR . '/' . get_current_user_id() . '-admin-' . $secret . '.txt'));
+            if ($messages) {
+                $builder->with_history(...$messages);
+            }
+
+            $result = $builder->generate_text_result();
+
+            //log_result($result);
+
+            if (is_wp_error($result)) {
+                error_log($result->get_error_message());
+                echo wp_json_encode(['reply' => $result->get_error_message()]);
+            }
+
+            $fr = new WP_AI_Client_Ability_Function_Resolver(...$abilities);
+
+            $reply = '';
+
+            while ($fr->has_ability_calls($result->toMessage())) {
+                $reply .= "*Tool called*\n\n";
+                $builder->add_message($result->toMessage());
+                $response = $fr->execute_abilities($result->toMessage());
+                if (is_wp_error($response)) {
+                    error_log($response->get_error_message());
+                    break;
+                }
+                $builder->add_message($response);
+                $result = $builder->generate_text_result();
+
+                //$result = $builder->with_message_parts($response)->generate_text_result();
+                if (is_wp_error($result)) {
+                    error_log($result->get_error_message());
+                    break;
+                }
+                //log_result($result);
+                //error_log(print_r($result->toMessage(), true));
+                // The only way to enqueue the model message is to fake it as user message
+                $m = $result->toMessage();
+                $role = WordPress\AiClient\Messages\Enums\MessageRoleEnum::user();
+                $mm = new \WordPress\AiClient\Messages\DTO\Message($role, $m->getParts());
+
+                // If that result message is enqueued and error is generated... I don't know right now
+                $builder->add_mmessage($mm);
+            }
+
+            file_put_contents(ASSISTANT_CACHE_DIR . '/' . get_current_user_id() . '-admin-' . $secret . '.txt', $builder->get_messages());
+
+            echo wp_json_encode(['reply' => $reply . $result->toText()]);
+        } catch (Exception $e) {
+            echo wp_json_encode(['reply' => $e->getMessage()]);
         }
-
-        return $tools;
-    }
-
-    protected function chatHistory(): ChatHistoryInterface {
-        return new FileChatHistory(
-                directory: __DIR__,
-                key: 'neuron',
-                contextWindow: 2000
-        );
+        die();
     }
 }
 
-use Psr\Log\AbstractLogger;
-use Psr\Log\LogLevel;
-
-class AssistantLogger extends AbstractLogger {
-
-    /**
-     * Logs with an arbitrary level.
-     *
-     * @param mixed  $level
-     * @param string|\Stringable $message
-     * @param array  $context
-     * @return void
-     */
-    public function log($level, string|\Stringable $message, array $context = []): void {
-        if (!WP_DEBUG) {
-            return;
-        }
-
-        error_log(
-                '[' .
-                strtoupper($level) .
-                '] ' .
-                $message . ' ' .
-                wp_json_encode($context, JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR)
-        );
+function log_result($result) {
+    if (is_wp_error($result)) {
+        /** @var WP_Error $result */
+        error_log($result->get_error_message());
+        return;
     }
+    $data = $result->jsonSerialize();
+    $data['modelMetadata'] = [];
+    error_log(print_r(json_encode($data, JSON_PRETTY_PRINT), true));
 }

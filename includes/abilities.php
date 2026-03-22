@@ -15,6 +15,48 @@ add_action('wp_abilities_api_categories_init', function () {
 // Dummy abilities
 add_action('wp_abilities_api_init', function () {
 
+    $r = wp_register_ability('assistant/user-data',
+            [
+                'label' => 'Returns the current user data',
+                'description' => 'Returns the current user data',
+                'category' => 'assistant',
+                'input_schema' => [],
+                'output_schema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'first_name' => [
+                            'type' => 'string',
+                            'description' => 'The user first name',
+                        ],
+                        'last_name' => [
+                            'type' => 'string',
+                            'description' => 'The user last name',
+                        ],
+                        'email' => [
+                            'type' => 'string',
+                            'description' => 'The user email',
+                        ],
+                    ],
+                ],
+                'execute_callback' => function ($input = null) {
+                    $user = wp_get_current_user();
+
+                    return [
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'email' => $user->user_email,
+                        'language_code' => $user->locale
+                    ];
+                },
+                'permission_callback' => function () {
+                    return is_user_logged_in();
+                },
+                'meta' => [
+                    'instructions' => 'Use the language list tool to decode the language code into the language name'
+                ],
+            ]
+    );
+
     $r = wp_register_ability('assistant/change-email',
             [
                 'label' => 'Change my email',
@@ -202,9 +244,9 @@ add_action('wp_abilities_api_init', function () {
                 ],
                 'execute_callback' => function ($input = null) {
                     $locales = get_available_languages(); // Only the code xx_YY
-                    if (!$locales) {
-                        $locales[] = 'en_US';
-                    }
+                    //if (!$locales) {
+                    $locales[] = 'en_US';
+                    //}
 
                     require_once ABSPATH . 'wp-admin/includes/translation-install.php';
                     $translations = wp_get_available_translations();
@@ -226,9 +268,8 @@ add_action('wp_abilities_api_init', function () {
                                 //'language' => $translation['language'],
                                 'code' => $translation['language'],
                                 'native_name' => $translation['native_name'],
-                                //'lang' => current($translation['iso']),
+                                    //'lang' => current($translation['iso']),
                             );
-
                         } else {
                             continue;
 //                            $languages[] = array(
@@ -250,7 +291,7 @@ add_action('wp_abilities_api_init', function () {
             ]
     );
 
-                    $r = wp_register_ability('assistant/change-language',
+    $r = wp_register_ability('assistant/change-user-language',
             [
                 'label' => 'Change my language',
                 'description' => 'Change the current user role',
@@ -276,7 +317,10 @@ add_action('wp_abilities_api_init', function () {
                     ],
                 ],
                 'execute_callback' => function ($input) {
-                        error_log($input['language_code']);
+                    error_log($input['language_code']);
+                    $user = wp_get_current_user();
+                    update_user_meta($user->ID, 'locale', $input['language_code']);
+
                     //return ['result' => 'Admit it, for a moment, you believed it would have worked.'];
                     return ['result' => 'The language was changed'];
                 },
@@ -284,6 +328,7 @@ add_action('wp_abilities_api_init', function () {
                     return is_user_logged_in();
                 },
                 'meta' => [
+                    'instructions' => 'To find the requested language code, use the lista language tool'
                 ],
             ]
     );

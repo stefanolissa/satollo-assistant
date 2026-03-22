@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9afe4ea074709a01f0422a21d19c7133",
+    "content-hash": "966b2e8abbe34742b1a80bc01ca5e7ab",
     "packages": [
         {
             "name": "guzzlehttp/guzzle",
@@ -396,26 +396,27 @@
         },
         {
             "name": "neuron-core/neuron-ai",
-            "version": "2.14.0",
+            "version": "3.2.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/neuron-core/neuron-ai.git",
-                "reference": "3a707188e01b5ecc67f0383f65f4e69cd82cd059"
+                "reference": "14585b4658896985be9c125fae10c7d5a1659645"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/neuron-core/neuron-ai/zipball/3a707188e01b5ecc67f0383f65f4e69cd82cd059",
-                "reference": "3a707188e01b5ecc67f0383f65f4e69cd82cd059",
+                "url": "https://api.github.com/repos/neuron-core/neuron-ai/zipball/14585b4658896985be9c125fae10c7d5a1659645",
+                "reference": "14585b4658896985be9c125fae10c7d5a1659645",
                 "shasum": ""
             },
             "require": {
-                "guzzlehttp/guzzle": "^7.9",
+                "guzzlehttp/guzzle": "^7.0",
                 "inspector-apm/inspector-php": "^3.16.12",
                 "php": "^8.1",
-                "psr/http-message": "^1.0|^2.0",
-                "psr/log": "^1.0|^2.0|^3.0"
+                "psr/http-message": "^1.0|^2.0"
             },
             "require-dev": {
+                "amphp/amp": "^3.1.1",
+                "amphp/http-client": "^5.3",
                 "aws/aws-sdk-php": "^3.209",
                 "elasticsearch/elasticsearch": "^8.0",
                 "ext-pdo": "*",
@@ -423,13 +424,15 @@
                 "google/auth": "^1.49",
                 "html2text/html2text": "^4.3",
                 "illuminate/database": "^10.0|^11.0|^12.0",
+                "laudis/neo4j-php-client": "^3.4",
                 "opensearch-project/opensearch-php": "^2.5",
                 "phpstan/phpstan": "^2.1",
-                "phpunit/phpunit": "^9.0",
+                "phpunit/phpunit": "^10.0",
                 "rector/rector": "^2.0",
                 "spatie/fork": "^1.2",
                 "tomasvotruba/type-coverage": "^2.0",
-                "typesense/typesense-php": "^5.0"
+                "typesense/typesense-php": "^5.0",
+                "vlucas/phpdotenv": "^5.6"
             },
             "bin": [
                 "bin/neuron"
@@ -453,7 +456,7 @@
             "description": "The PHP Agentic Framework.",
             "support": {
                 "issues": "https://github.com/neuron-core/neuron-ai/issues",
-                "source": "https://github.com/neuron-core/neuron-ai/tree/2.14.0"
+                "source": "https://github.com/neuron-core/neuron-ai/tree/3.2.9"
             },
             "funding": [
                 {
@@ -461,7 +464,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-03-19T11:26:44+00:00"
+            "time": "2026-03-20T17:51:45+00:00"
         },
         {
             "name": "psr/http-client",

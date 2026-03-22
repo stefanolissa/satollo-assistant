@@ -5,9 +5,9 @@ $assistant_settings = get_option('assistant_settings', []);
 
 if (($assistant_settings['framework'] ?? 'neuron') === 'neuron') {
     require_once __DIR__ . '/../vendor/autoload.php';
-    require_once __DIR__ . '/agent.php';
+    require_once __DIR__ . '/agent-neuron.php';
 
-    AssistantAgent::make()->resolveChatHistory()->flushAll();
+    AssistantAgent::make()->getChatHistory()->flushAll();
 } else {
     // Delete the chat history
     $secret = get_option('assistant_secret');

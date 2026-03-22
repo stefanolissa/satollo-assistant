@@ -21,6 +21,7 @@ if (version_compare(wp_get_wp_version(), '6.9', '<=')) {
 }
 
 define('ASSISTANT_VERSION', '0.0.7');
+define('ASSISTANT_DIR', __DIR__);
 define('ASSISTANT_CACHE_DIR', __DIR__ . '/cache');
 
 //register_activation_hook(__FILE__, function () {
