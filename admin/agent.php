@@ -89,7 +89,7 @@ function assistant_ajax_admin_prompt() {
                 $builder->add_mmessage($mm);
             }
 
-            file_put_contents(ASSISTANT_CACHE_DIR . '/' . get_current_user_id() . '-admin-' . $secret . '.txt', $builder->get_messages());
+            file_put_contents(ASSISTANT_CACHE_DIR . '/' . get_current_user_id() . '-admin-' . $secret . '.txt', serialize($builder->get_messages()));
 
             echo wp_json_encode(['reply' => $reply . $result->toText()]);
         } catch (Exception $e) {

@@ -58,7 +58,7 @@ class AssistantAgent extends Agent {
         if ($category) {
             $instructions = $category->get_meta()['instructions'] ?? '';
         }
-        return file_get_contents(__DIR__ . '/system.md') . ' ' . $instructions;
+        return file_get_contents(__DIR__ . '/system.md') . ' ' . $instructions . ' Use the language ' . wp_get_current_user()->locale;
     }
 
     protected function tools(): array {
@@ -97,7 +97,7 @@ class AssistantAgent extends Agent {
                     );
                     $tool->addProperty(ArrayProperty::make(
                                     $name,
-                                    $data['description'],
+                                    $data['description'] ?? '',
                                     in_array($name, $required),
                                     $items,
                                     $data['minItems'] ?? 0,
@@ -116,7 +116,7 @@ class AssistantAgent extends Agent {
             }
 
 
-             $tool->setCallable(function (...$args) use ($ability) {
+            $tool->setCallable(function (...$args) use ($ability) {
 
                 // Null must be passed to abilities without an input schema
                 if (empty($args)) {
@@ -167,7 +167,9 @@ class AssistantLogger extends AbstractLogger {
         if (!WP_DEBUG) {
             return;
         }
-
+        if ($message === 'message-saving' || $message === 'message-saved') {
+            return;
+        }
         error_log(
                 '[' .
                 strtoupper($level) .

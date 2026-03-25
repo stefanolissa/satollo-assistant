@@ -7,7 +7,7 @@ class AssistantClientPromptBuilder extends WP_AI_Client_Prompt_Builder {
         parent::__construct(WordPress\AiClient\AiClient::defaultRegistry(), $prompt);
     }
 
-/**
+    /**
      * Bad but necessary things.
      *
      * @param \WordPress\AiClient\Messages\DTO\Message $message
@@ -47,7 +47,7 @@ class AssistantClientPromptBuilder extends WP_AI_Client_Prompt_Builder {
         return $messages;
     }
 
-        function get_function_resolver() {
+    function get_function_resolver() {
         return new WP_AI_Client_Ability_Function_Resolver(...$this->abilities);
     }
 }

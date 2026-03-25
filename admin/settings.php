@@ -123,18 +123,22 @@ $table->prepare_items();
         font-family: monospace;
     }
 </style>
+<script>
+    jQuery(function () {
+        jQuery('#show-keys').on('click', (event) => {
+            jQuery('input[type="password"').attr('type', 'text');
+        });
+    });
+</script>
 <div class="wrap">
     <h2>Settings</h2>
-<!--    <p>
-        <a href="?page=monitor-abilities">List</a> | <a href="?page=monitor-abilities&subpage=logs">Logs</a>
-    </p>-->
 
     <form method="post">
 
         <h3>AI Providers</h3>
         <p>
             The Assistant needs an AI provider. Create an account and get an API key from a provider
-            of your choice, please.
+            of your choice, please. If you use the WP 7.0 AI connectors, Assistant can use them as well.
         </p>
 
         <h3>AI framework</h3>
@@ -142,20 +146,20 @@ $table->prepare_items();
         <p>
             <label>
                 <input type="radio" name="data[framework]" value="neuron" <?php echo $framework === 'neuron' ? 'checked' : ''; ?>>
-                Neuron AI
+                Neuron AI (recommended)
             </label>
         </p>
 
         <p>
             <label>
                 <input type="radio" name="data[framework]" value="wp" <?php echo $framework === 'wp' ? 'checked' : ''; ?>>
-                WP AI Client
+                WP AI Client (due to some limitations the full AI power cannot be expressed)
             </label>
         </p>
 
         <h3>AI provider</h3>
         <p>
-            Only for Neuron AI.
+            Only for Neuron AI. <a href="#" id="show-keys">Show keys</a>
         </p>
         <table class="widefat">
             <thead>
@@ -178,9 +182,9 @@ $table->prepare_items();
                         <input type="text" name="data[mistral_model]" class="model" value="<?php echo esc_attr($settings['mistral_model'] ?? ''); ?>" placeholder="mistral-medium-2508">
                     </td>
                     <td>
-                        <input type="text" name="data[mistral_key]" class="key" value="<?php echo esc_attr($settings['mistral_key'] ?? ''); ?>">
-                        <input type="checkbox" name="data[mistral_use_wp_key]" value="" <?php echo isset($settings['mistral_use_wp_key']) ? 'checked' : ''; ?>> Use the WP stored key
-                            <?= get_option('connectors_ai_mistral_api_key') ? '(present)':'(not present)' ?>
+                        <input type="password" name="data[mistral_key]" class="key" value="<?php echo esc_attr($settings['mistral_key'] ?? ''); ?>">
+                        <input type="checkbox" name="data[mistral_use_wp_key]" value="" <?php echo isset($settings['mistral_use_wp_key']) ? 'checked' : ''; ?>> Use the WP connector stored key
+                        <?= get_option('connectors_ai_mistral_api_key') ? '(present)' : '(not present)' ?>
 
                     </td>
                 </tr>
@@ -195,7 +199,9 @@ $table->prepare_items();
                         <input type="text" name="data[openai_model]" class="model" value="<?php echo esc_attr($settings['openai_model'] ?? ''); ?>" placeholder="gpt-5-nano">
                     </td>
                     <td>
-                        <input type="text" name="data[openai_key]" class="key" value="<?php echo esc_attr($settings['openai_key'] ?? ''); ?>">
+                        <input type="password" name="data[openai_key]" class="key" value="<?php echo esc_attr($settings['openai_key'] ?? ''); ?>">
+                        <input type="checkbox" name="data[openai_use_wp_key]" value="" <?php echo isset($settings['openai_use_wp_key']) ? 'checked' : ''; ?>> Use the WP connector stored key
+                        <?= get_option('connectors_ai_openai_api_key') ? '(present)' : '(not present)' ?>
                     </td>
                 </tr>
                 <tr>
@@ -209,7 +215,7 @@ $table->prepare_items();
                         <input type="text" name="data[anthropic_model]" class="model" value="<?php echo esc_attr($settings['anthropic_model'] ?? ''); ?>" placeholder="claude-3-haiku-20240307">
                     </td>
                     <td>
-                        <input type="text" name="data[anthropic_key]" class="key" value="<?php echo esc_attr($settings['anthropic_key'] ?? ''); ?>">
+                        <input type="password" name="data[anthropic_key]" class="key" value="<?php echo esc_attr($settings['anthropic_key'] ?? ''); ?>">
                     </td>
                 </tr>
                 <tr>
@@ -224,7 +230,7 @@ $table->prepare_items();
                         <p class="description"><a href="https://ai.google.dev/gemini-api/docs/models" target="_blank">Model list</a></p>
                     </td>
                     <td>
-                        <input type="text" name="data[gemini_key]" class="key" value="<?php echo esc_attr($settings['gemini_key'] ?? ''); ?>">
+                        <input type="password" name="data[gemini_key]" class="key" value="<?php echo esc_attr($settings['gemini_key'] ?? ''); ?>">
                     </td>
                 </tr>
             </tbody>
